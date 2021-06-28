@@ -3,8 +3,11 @@
 import unittest
 
 import logging
-import mock
+from unittest import mock
 import requests_mock
+
+import sys
+import io
 
 from certbot.errors import PluginError
 try:
@@ -15,10 +18,10 @@ from certbot.plugins import dns_test_common
 from certbot.plugins.dns_test_common import DOMAIN
 from certbot.tests import util as test_util
 
-from certbot_dns_infomaniak.dns_infomaniak import Authenticator
 from certbot_dns_infomaniak.dns_infomaniak import _APIDomain
 
 logger = logging.getLogger(__name__)
+logger.setLevel(logging.DEBUG)
 
 
 FAKE_TOKEN = "xxxx"
@@ -29,17 +32,31 @@ class AuthenticatorTest(
 ):
     """Class to test the Authenticator class"""
     def setUp(self):
-        super().setUp()
+        super(AuthenticatorTest, self).setUp()
 
         self.config = mock.MagicMock()
 
         os.environ["INFOMANIAK_API_TOKEN"] = FAKE_TOKEN
 
+        from certbot_dns_infomaniak.dns_infomaniak import Authenticator
         self.auth = Authenticator(self.config, "infomaniak")
 
-        self.mock_client = mock.MagicMock()
-        # _get_ispconfig_client | pylint: disable=protected-access
+        self.mock_client = mock.MagicMock(default_propagation_seconds=15)
+
         self.auth._api_client = mock.MagicMock(return_value=self.mock_client)
+
+        try:
+            from certbot.display.util import notify  # noqa: F401
+            notify_patch = mock.patch('certbot._internal.main.display_util.notify')
+            self.mock_notify = notify_patch.start()
+            self.addCleanup(notify_patch.stop)
+            self.old_stdout = sys.stdout
+            sys.stdout = io.StringIO()
+        except ImportError:
+            self.old_stdout = sys.stdout
+
+    def tearDown(self):
+        sys.stdout = self.old_stdout
 
     def test_perform(self):
         """Tests the perform function to see if client method is called"""
