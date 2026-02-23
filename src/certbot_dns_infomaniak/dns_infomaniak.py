@@ -1,13 +1,15 @@
+# SPDX-FileCopyrightText: 2021-2022 Rene Luria <rene.luria@infomaniak.com>
+# SPDX-FileCopyrightText: 2021-2022 Yannik Roth <info@fuechslein.ch>
+# SPDX-FileCopyrightText: 2021      Romain Autran <romain.autran@2itea.ch>
+# SPDX-License-Identifier: Apache-2.0
 """DNS Authenticator for Infomaniak"""
 import json
 import logging
 import idna
 
 import requests
-import zope.interface
 
 from certbot import errors
-from certbot import interfaces
 from certbot.plugins import dns_common
 try:
     import certbot.compat.os as os
@@ -17,8 +19,6 @@ except ImportError:
 logger = logging.getLogger(__name__)
 
 
-@zope.interface.implementer(interfaces.IAuthenticator)
-@zope.interface.provider(interfaces.IPluginFactory)
 class Authenticator(dns_common.DNSAuthenticator):
     """DNS Authenticator for Infomaniak
 
@@ -119,8 +119,10 @@ class _APIDomain:
         :param dict payload : body of request
         """
         url = self.baseUrl + url
+        headers = {"Content-Type": "application/json"}
+        json_data = json.dumps(payload)
         logger.debug("POST %s", url)
-        with self.session.post(url, data=payload) as req:
+        with self.session.post(url, data=json_data, headers=headers) as req:
             try:
                 result = req.json()
             except json.decoder.JSONDecodeError as exc:
@@ -178,7 +180,7 @@ class _APIDomain:
                     and x["type"] == record["type"]
                     and x["target"] == record["target"]
                 ),
-                self._get_request("/1/domain/{domain_id}/dns/record".format(domain_id=domain_id)),
+                self._get_request("/1/domain/{domain_id}/dns/record?search={fqdn}&filter[types][]={type}".format(domain_id=domain_id, fqdn=fqdn, type=record["type"])),
             )
         )
 
