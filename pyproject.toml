@@ -1,5 +1,5 @@
 [build-system]
-requires = ["uv_build"]
+requires = ["uv_build>=0.0.0,<0.12"]
 build-backend = "uv_build"
 
 [project]
@@ -11,12 +11,11 @@ authors = [
     { name = "Rene Luria", email = "rene.luria@infomaniak.com" },
 ]
 license = "Apache-2.0"
-requires-python = ">=3.9"
+requires-python = ">=3.10"
 dependencies = [
     "certbot>=0.31.0",
     "idna",
     "requests",
-    "requests-mock",
 ]
 classifiers = [
     "Development Status :: 3 - Alpha",
@@ -24,7 +23,6 @@ classifiers = [
     "Intended Audience :: System Administrators",
     "Operating System :: POSIX :: Linux",
     "Programming Language :: Python",
-    "Programming Language :: Python :: 3.9",
     "Programming Language :: Python :: 3.10",
     "Programming Language :: Python :: 3.11",
     "Programming Language :: Python :: 3.12",
@@ -47,6 +45,7 @@ dns-infomaniak = "certbot_dns_infomaniak.dns_infomaniak:Authenticator"
 [dependency-groups]
 dev = [
     "pytest",
+    "requests-mock",
     "ruff",
 ]
 
